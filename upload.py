@@ -596,7 +596,7 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
             "  2) Update one device using online firmware:\n"
             "     upload.py -o -i 192.168.2.99\n"
             "  3) Start Web UI (no parameters):\n"
-            "     upload.py\n"
+            "     upload.py server\n"
         ),
     )
     parser.add_argument('-c', '--configip', help='ip address to select config')
@@ -1484,7 +1484,7 @@ def run_processing_from_options(
 
 if __name__ == "__main__":  # Ensure this runs only when script is executed directly
     # If no CLI arguments are given, launch the Web UI server and open browser
-    if len(sys.argv) <= 1:
+    if len(sys.argv) > 0 and sys.argv[1] == 'server':
         try:
             from webui.server import serve
             # Bind only on localhost and open browser to localhost
