@@ -41,7 +41,7 @@ def log_config(debug: bool, quiet: bool) -> None:
         log.setlevel(logging.WARNING)
 
 
-def find_upload_ini(from_args: String):
+def find_upload_ini(from_args: str):
     """Hunt for upload.ini config file"""
     search = ['upload.ini', '/etc/gude-upload/upload.ini']
     if from_args:
