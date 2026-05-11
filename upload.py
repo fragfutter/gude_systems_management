@@ -40,6 +40,23 @@ def log_config(debug: bool, quiet: bool) -> None:
     elif quiet:
         log.setlevel(logging.WARNING)
 
+
+def find_upload_ini(from_args: String):
+    """Hunt for upload.ini config file"""
+    search = ['upload.ini', '/etc/gude-upload/upload.ini']
+    if from_args:
+        if os.path.exists(from_args):
+            log.debug('config file from args %s', from_args)
+            return from_args
+        else:
+            log.critical('config file %s missing', from_args)
+    for u in search:
+        if os.path.exists(u):
+            log.debug('config file found %s', u)
+            return u
+    log.critical('no config specificed and no config found in %s', search)
+
+
 def fetch_latest_fw_infos(base_url: str   = BASE_URL) -> ConfigParser:
     """
     Return a ready-to-use ConfigParser whose layout matches
@@ -601,7 +618,7 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
     )
     parser.add_argument('-c', '--configip', help='ip address to select config')
     parser.add_argument('-f', '--forcefw', help='upload fw even if already up to date', action="store_true")
-    parser.add_argument('-u', '--upload_ini', help='upload.ini paramater set', default='upload.ini')
+    parser.add_argument('-u', '--upload_ini', help='upload.ini paramater set')
     parser.add_argument('-v', '--version_ini', help='fw version defs', default='version.ini')
     parser.add_argument('-o', '--onlineupdate', help='use online update files', action="store_true", default=False)
     parser.add_argument('-i', '--iprange', nargs="+",  help='range of ip address to manage')
@@ -622,11 +639,13 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
     parser.add_argument('--quiet', action='store_true', default=False, help='turn off info messages')
     _args = parser.parse_args()
     log_config(_args.debug, _args.quiet)
+    _args.upload_ini = find_upload_ini(_args.upload_ini)
 
     log.debug(f"Reading {_args.upload_ini} ...")
     _config = ConfigParser(strict=False)
     _read_files = _config.read(_args.upload_ini)
     _args.upload_ini_found = bool(_read_files)
+    print(_args.upload_ini_found)
     if not _args.upload_ini_found:
         log.warning(f"No upload.ini configuration found at '{_args.upload_ini}'.")
         log.warning("Provide hosts in upload.ini, enable 'gbl=search', use '--gbl', or pass '--iprange'.")
