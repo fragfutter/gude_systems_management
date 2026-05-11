@@ -1484,7 +1484,7 @@ def run_processing_from_options(
 
 if __name__ == "__main__":  # Ensure this runs only when script is executed directly
     # If no CLI arguments are given, launch the Web UI server and open browser
-    if len(sys.argv) > 0 and sys.argv[1] == 'server':
+    if sys.argv[-1] == 'server':
         try:
             from webui.server import serve
             # Bind only on localhost and open browser to localhost
