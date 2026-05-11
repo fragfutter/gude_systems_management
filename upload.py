@@ -31,6 +31,15 @@ log = logging.getLogger(__name__)  # custom logger name can be set
 log.setLevel(logging.getLevelName('DEBUG'))
 
 BASE_URL = "https://files.gude-systems.com/fw"
+
+
+def log_config(debug: bool, quiet: bool) -> None:
+    log.setLevel(logging.INFO)
+    if debug:
+        log.setLevel(logging.DEBUG)
+    elif quiet:
+        log.setlevel(logging.WARNING)
+
 def fetch_latest_fw_infos(base_url: str   = BASE_URL) -> ConfigParser:
     """
     Return a ready-to-use ConfigParser whose layout matches
@@ -609,7 +618,10 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
     parser.add_argument('--firmware-config', type=json.loads, default=None, help='JSON mapping of model->{filename, version} to override version.ini')
     parser.add_argument('--custom-config', type=json.loads, default=None, help='JSON mapping of ip->config_filename or "RESET" to override config file selection')
     parser.add_argument('--custom-ssl', type=json.loads, default=None, help='JSON mapping of ip->ssl_filename to override ssl cert selection')
+    parser.add_argument('--debug', action='store_true', default=False, help='turn on debug messages')
+    parser.add_argument('--quiet', action='store_true', default=False, help='turn off info messages')
     _args = parser.parse_args()
+    log_config(_args.debug, _args.quiet)
 
     log.debug(f"Reading {_args.upload_ini} ...")
     _config = ConfigParser(strict=False)
