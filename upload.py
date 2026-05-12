@@ -658,7 +658,6 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
     _config = ConfigParser(strict=False)
     _read_files = _config.read(_args.upload_ini)
     _args.upload_ini_found = bool(_read_files)
-    print(_args.upload_ini_found)
     if not _args.upload_ini_found:
         log.warning(f"No upload.ini configuration found at '{_args.upload_ini}'.")
         log.warning("Provide hosts in upload.ini, enable 'gbl=search', use '--gbl', or pass '--iprange'.")
