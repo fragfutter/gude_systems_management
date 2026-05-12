@@ -26,14 +26,27 @@ import re
 from gude import file_search
 
 import logging
-logging.basicConfig(format='%(asctime)s %(name)-18s %(levelname)-8s %(message)s')
+
 log = logging.getLogger(__name__)  # custom logger name can be set
-log.setLevel(logging.getLevelName('DEBUG'))
 
 BASE_URL = "https://files.gude-systems.com/fw"
 
 
+class ShutdownHandler(logging.Handler):
+    """terminate on critical logmessage"""
+    def emit(self, record):
+        logging.shutdown()
+        sys.exit(1)
+
+
 def log_config(debug: bool, quiet: bool) -> None:
+    handler = logging.StreamHandler(
+        stream=sys.stderr)
+    formatter = logging.Formatter(
+        fmt='%(asctime)s %(name)-18s %(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
+    log.addHandler(ShutdownHandler(level=logging.CRITICAL))
     log.setLevel(logging.INFO)
     if debug:
         log.setLevel(logging.DEBUG)
@@ -730,7 +743,9 @@ def add_iprange_to_config(
             _log_fn = log.warning if web_mode else log.error
             _log_fn("\n".join(error_lines) + "\n")
             if upload_ini_found is False:
+                log.critical("Missing upload.ini configuration and no device target was provided.")
                 raise KeyError("Missing upload.ini configuration and no device target was provided.")
+            log.critical("Missing required args, could not determine device!")
             raise KeyError("Missing required args, could not determine device!")
 
 
