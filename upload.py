@@ -682,6 +682,7 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
         set_config_defaults(_config, section, settings)
 
     _firmware = ConfigParser(strict=False)
+    _filename = os.path.join(_config['defaults']['fwdir'], _args.version_ini)
     if _args.search_folder is not None and os.path.isdir(_args.search_folder):
          log.debug(f"Searching for binaries in {_args.search_folder} ...")
          bin_infos = file_search.rekursive_search(_args.search_folder)
@@ -690,9 +691,12 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
          _firmware = file_search.get_config(unique_bin_infos, config=_firmware)
     elif _args.onlineupdate:
         _firmware = fetch_latest_fw_infos()
+        # save new list of firmware to version.ini
+        with open(_filename, 'w', encoding='utf8') as fh:
+            _firmware.write(fh)
     else:
-        log.debug(f"Reading {os.path.join(_config['defaults']['fwdir'], _args.version_ini)} ...")
-        _firmware.read(os.path.join(_config['defaults']['fwdir'], _args.version_ini))
+        log.debug("Reading %s", _filename)
+        _firmware.read(_filename)
     log.debug("Getting my IP (for GBL/UDP search) ...")
     _my_ip = _config['defaults']['myIp'] if 'myIp' in _config['defaults'] else '0.0.0.0'
 
