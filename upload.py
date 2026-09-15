@@ -34,26 +34,22 @@ BASE_URL = "https://files.gude-systems.com/fw"
 log = logging.getLogger(__name__)
 
 
-class ShutdownHandler(logging.Handler):
-    """terminate on critical logmessage"""
-    def emit(self, record):
-        logging.shutdown()
-        sys.exit(1)
-
-
 def log_config(debug: bool, quiet: bool) -> None:
-    handler = logging.StreamHandler(
-        stream=sys.stderr)
+    """Configure console logging for both the CLI and application modules."""
+    root = logging.getLogger()
+    for existing in list(root.handlers):
+        if getattr(existing, '_gude_console', False):
+            root.removeHandler(existing)
+            existing.close()
+    handler = logging.StreamHandler(stream=sys.stderr)
+    handler._gude_console = True
     formatter = logging.Formatter(
         fmt='%(asctime)s %(name)-18s %(levelname)-8s %(message)s')
     handler.setFormatter(formatter)
-    log.addHandler(handler)
-    log.addHandler(ShutdownHandler(level=logging.CRITICAL))
-    log.setLevel(logging.INFO)
-    if debug:
-        log.setLevel(logging.DEBUG)
-    elif quiet:
-        log.setLevel(logging.WARNING)
+    level = logging.DEBUG if debug else logging.WARNING if quiet else logging.INFO
+    handler.setLevel(level)
+    root.addHandler(handler)
+    root.setLevel(level)
 
 
 def fetch_latest_fw_infos(base_url: str   = BASE_URL) -> ConfigParser:
@@ -633,8 +629,9 @@ def parse_args() -> Tuple[Namespace, ConfigParser, ConfigParser, str]:
     parser.add_argument('--firmware-config', type=json.loads, default=None, help='JSON mapping of model->{filename, version} to override version.ini')
     parser.add_argument('--custom-config', type=json.loads, default=None, help='JSON mapping of ip->config_filename or "RESET" to override config file selection')
     parser.add_argument('--custom-ssl', type=json.loads, default=None, help='JSON mapping of ip->ssl_filename to override ssl cert selection')
-    parser.add_argument('--debug', action='store_true', default=False, help='turn on debug log messages')
-    parser.add_argument('--quiet', action='store_true', default=False, help='turn off info log messages')
+    verbosity = parser.add_mutually_exclusive_group()
+    verbosity.add_argument('--debug', action='store_true', default=False, help='turn on debug log messages')
+    verbosity.add_argument('--quiet', action='store_true', default=False, help='turn off info log messages')
     _args = parser.parse_args()
     log_config(_args.debug, _args.quiet)
 
@@ -1534,6 +1531,7 @@ def run_processing_from_options(
 if __name__ == "__main__":  # Ensure this runs only when script is executed directly
     # If no CLI arguments are given, launch the Web UI server and open browser
     if len(sys.argv) <= 1:
+        log_config(debug=False, quiet=False)
         try:
             from webui.server import serve
             # Bind only on localhost and open browser to localhost
